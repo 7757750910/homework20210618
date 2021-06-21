@@ -1,59 +1,66 @@
-'''1、补全计算器（加法 除法）的测试用例
-2、使用参数化完成测试用例的自动生成
-3、在调用测试方法之前打印【开始计算】，在调用测试方法之后打印【计算结束】
-注意：
-使用等价类，边界值，因果图等设计测试用例
-测试用例中添加断言，验证结果
-灵活使用 setup(), teardown() , setup_class(), teardown_class()
 '''
+1.改造 计算器 测试用例，使用 fixture 函数获取计算器的实例
+2.计算之前打印开始计算，计算之后打印结束计算
+3.添加用例日志，并将日志保存到日志文件目录下
+4.生成测试报告，展示测试用例的标题，用例步骤，与测试日志，截图附到课程贴下
+'''
+import logging
+import allure
 import pytest
 import yaml
 
-#被测方法
-def add(self,a,b):
-    return a+b
-def div(self,c,d):
-    return c/d
-#测试方法
-class TestAdd:
-    def setup_class(self):
-        print('开始加法测试')
-    def teardown_class(self):
-        print('加法测试结束')
-    def setup(self):
-        print('开始执行用例')
-    def teardown(self):
-        print('结束用例执行')
 
-    @pytest.mark.parametrize(['a', 'b', 'expect'], yaml.safe_load((open("./add.yaml"))))
-    @pytest.mark.add
-    def test_add1(self,a,b,expect):
-        assert expect == a+b
-
-class TestDiv:
-    def setup_class(self):
-        print('开始除法测试')
-    def teardown_class(self):
-        print('除法测试结束')
-    def setup(self):
-        print('开始执行用例')
-    def teardown(self):
-        print('结束用例执行')
-
-    @pytest.mark.parametrize(['c', 'd', 'expect'], yaml.safe_load((open("./div.yml."))))
-    @pytest.mark.div
-    def test_div1(self, c, d, expect):
-        assert expect == c/d
+# 被测方法
+def add(a, b):
+    return a + b
 
 
-'''
-加法中存在字母、特殊字符、数字类的混合相加，可是断言这块怎么添加判断呢，
-eg:1+a = ? 这个断言该怎么写，assert error?,还是断言就不支持，
-这块没研究出来该咋写，用例中只会写一些常规的。
-除法中除数是0的时候，也是不会写断言这部分
-还有结果是无限循环小数的时候，断言该怎么写
-'''
+def div(c, d):
+    return c / d
 
 
+# 测试加法
+@allure.story('测试加法')
+@allure.title('正常数据测试加法')
+@pytest.mark.parametrize(['a', 'b', 'expect'], yaml.safe_load(open("./add.yaml")))
+def test_add1(a, b, expect, setdown):
+    logging.info(f'源数据 {a}')
+    logging.info(f'源数据 {b}')
+    assert expect == a + b
 
 
+# 小数相加时的特殊情况
+@allure.story('测试加法异常')
+@allure.title('特殊数据测试加法')
+@pytest.mark.parametrize('a,b,expect', [(0.1, 0.2, 0.3)])
+def test_add2(a, b, expect, setdown):
+    logging.info(f'源数据 {a}')
+    logging.info(f'源数据 {b}')
+    assert expect == round((a + b), 2)
+
+
+# 测试除法
+@allure.story('测试除法')
+@allure.title('正常测试除法异常')
+@pytest.mark.parametrize(['c', 'd', 'expect'], yaml.safe_load((open("./div.yml."))))
+@pytest.mark.div
+def test_div1(c, d, expect, setdown):
+    logging.info(f'源数据 {c}')
+    logging.info(f'源数据 {d}')
+    assert expect == c / d
+
+
+# 除数为0时
+@allure.story('测试除法异常')
+@allure.title('特殊数据测试除法异常')
+@pytest.mark.parametrize('c,d', [(1, 0)])
+def test_div2(c, d, setdown):
+    logging.info(f'源数据 {c}')
+    logging.info(f'源数据 {d}')
+    with pytest.raises(ZeroDivisionError):
+        div(1, 0)
+
+
+def test_attach_photo():
+    allure.attach.file("D:\霍格沃兹/kobe.jpg",
+                       name='这是一个图片', attachment_type=allure.attachment_type.JPG)
